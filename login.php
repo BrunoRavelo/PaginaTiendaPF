@@ -2,18 +2,18 @@
 session_start();
 include("php/conexionBD.php");
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') { //primero checa que se envie el formulario 
+    $email = $_POST['email'] ?? ''; //se hace un ?? para que si el valor es nulo se sustituya con ''
     $password = $_POST['password'] ?? '';
 
     // Consulta para verificar el usuario y contraseña
-    $stmt = $con->prepare("SELECT id_usuario, correo, password FROM usuarios WHERE correo = ?");
-    $stmt->bind_param("s", $email);
+    $stmt = $con->prepare("SELECT id_usuario, correo, password FROM usuarios WHERE correo = ?"); //se prepara la consulta, ? significa que aqui se va a poner el blind param
+    $stmt->bind_param("s", $email); //manda el correo con una s de string como parametro
     $stmt->execute();
     $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
+    $user = $result->fetch_assoc(); //contiene id usuario y correo 
 
-    if ($user && $password === $user['password']) {
+    if ($user && $password === $user['password']) { //si user existe y la contraseña es igual a la contraseña dentr de user entonces sigue
         //Caso de que ingrese todo bien se guarda 
         $_SESSION['id_usuario'] = $user['id_usuario'];
         $_SESSION['correo'] = $user['correo'];
@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Usuario o contraseña incorrectos. Por favor, inténtelo de nuevo.";
     }
 
-    $stmt->close();
-    $con->close();
+    $stmt->close(); //cierra la consulta preparada
+    $con->close(); //cierra la conexion
 }
 ?>
 <!DOCTYPE html>
@@ -37,14 +37,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body{
+            background-color: #FAE3DE;
+            height: 100vh; /* Esto asegura que el div ocupe toda la altura de la pantalla */
+        }
+    </style>
 </head>
 <body>
+    <!--Se utilizo un formato preestablecido de incio de sesion-->
     <div class="container d-flex justify-content-center align-items-center vh-100">
         <div class="card p-4 shadow" style="width: 400px;">
             <h2 class="text-center mb-4">Iniciar Sesión</h2>
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger" role="alert">
-                    <?= htmlspecialchars($error) ?>
+                    <?= htmlspecialchars($error) ?> <!-- esto evita ataques con entradas de usuario-->
                 </div>
             <?php endif; ?>
             <form method="POST">
@@ -56,11 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="password" class="form-label">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                <button type="submit" class="btn btn-primary w-100" style="background-color: #F08C9C; color: white;border: none;">Iniciar Sesión</button>
             </form>
             <div class="text-center mt-3">
                 <p>¿Aún no tienes cuenta? 
-                    <a href="registro.php">Regístrate</a>
+                    <a href="registro.php"style="color: #F08C9C;">Regístrate</a>
                 </p>
             </div>
 
