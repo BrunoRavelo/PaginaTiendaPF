@@ -1,11 +1,11 @@
 <?php
-session_start();
+  session_start();
 
-// Comprobar si el usuario no está logueado
-if (!isset($_SESSION['id_usuario'])) {
-    // Si no está logueado, redirigir al formulario de login (index.php)
-    header("Location: index.php");
-    exit(); // Termina la ejecución del script
+  // Comprobar si el usuario no está logueado
+  if (!isset($_SESSION['id_usuario'])) {
+      // Si no está logueado, redirigir al formulario de login (index.php)
+      header("Location: index.php");
+      exit(); // Termina la ejecución del script
 }
 
 // Si está logueado, continuar con la ejecución de la página (tienda.php)
@@ -18,20 +18,39 @@ $correo = $_SESSION['correo'];
 
   // Consulta para obtener las categorías
   $categorias = $con->query("select id_categoria, categoria from categorias");
-  
 
   // Comprobar si la consulta fue exitosa
   if (!$categorias) {
       echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
       die("Error en la consulta: " . mysqli_error($con));
   }
+
   $productos = $con->query("SELECT nombre, foto, precio FROM productos");
   if (!$productos) {
     echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
     die("Error en la consulta: " . mysqli_error($con));
-}
-    // Cerrar la conexión
-    mysqli_close($con);
+  }
+  $query = "
+            SELECT p.nombre, p.precio 
+            FROM carrito c JOIN productos p 
+            ON c.id_producto = p.id_producto
+            WHERE c.id_usuario = $id_usuario
+            ";
+
+  $carrito = $con->query($query);
+  if (!$carrito) {
+    echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
+    die("Error en la consulta: " . mysqli_error($con));
+  }
+  $total = 0;
+  $productos_carrito = [];
+  while ($row = $carrito->fetch_assoc()) {
+      $productos_carrito[] = $row;
+      $total += $row['precio'];
+  }
+
+  // Cerrar la conexión
+  mysqli_close($con);
 
 ?>
 
@@ -119,12 +138,42 @@ $correo = $_SESSION['correo'];
         <symbol xmlns="http://www.w3.org/2000/svg" id="pet" viewBox="0 0 14 14"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.5 9.5c.552 0 1-.672 1-1.5s-.448-1.5-1-1.5s-1 .672-1 1.5s.448 1.5 1 1.5m3-4.5c.552 0 1-.672 1-1.5S5.052 2 4.5 2s-1 .672-1 1.5s.448 1.5 1 1.5m5 0c.552 0 1-.672 1-1.5S10.052 2 9.5 2s-1 .672-1 1.5s.448 1.5 1 1.5m3 4.5c.552 0 1-.672 1-1.5s-.448-1.5-1-1.5s-1 .672-1 1.5s.448 1.5 1 1.5M10 10c0 1.38-1.62 2-3 2s-3-.62-3-2s1-3.5 3-3.5s3 2.12 3 3.5"/></symbol>
       </defs>
     </svg>
-
+    
     <div class="preloader-wrapper">
       <div class="preloader">
       </div>
     </div>
+    <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasCart">
+      <div class="offcanvas-header justify-content-center">
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div class="order-md-last">         
+          <h4 class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-primary">Your cart</span>
+            <span class="badge bg-primary rounded-pill"><?php echo count($productos_carrito); ?></span>
+          </h4>
+          <ul class="list-group mb-3">
+            <?php foreach ($productos_carrito as $producto_carrito): ?>
+              <li class="list-group-item d-flex justify-content-between lh-sm">
+                <div>
+                  <h6 class="my-0"><?php echo $producto['nombre']; ?></h6>
+                  <small class="text-body-secondary">Brief description</small>
+                </div>
+                <span class="text-body-secondary">$<?php echo number_format($producto['precio'], 2); ?></span>
+              </li>
+            <?php endforeach; ?>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Total (USD)</span>
+              <strong>$<?php echo number_format($total, 2); ?></strong>
+            </li>
+          </ul>
 
+          <button class="w-100 btn btn-primary btn-lg" type="submit">Continue to checkout</button>
+        </div>
+      </div>
+    </div>
+    <!--Carrito original
     <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasCart">
       <div class="offcanvas-header justify-content-center">
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -167,6 +216,7 @@ $correo = $_SESSION['correo'];
         </div>
       </div>
     </div>
+    -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
       <div class="offcanvas-header justify-content-between">
           <h4 class="fw-normal text-uppercase fs-6">Menu</h4>
