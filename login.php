@@ -14,11 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $result->fetch_assoc();
 
     if ($user && $password === $user['password']) {
-        // Usuario y contraseña correctos
+        //Caso de que ingrese todo bien se guarda 
         $_SESSION['id_usuario'] = $user['id_usuario'];
         $_SESSION['correo'] = $user['correo'];
 
         // Redirige a tienda.php
+        //header es mandar todo desde antes
         header("Location: tienda.php");
         exit();
     } else {
