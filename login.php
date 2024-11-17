@@ -5,9 +5,8 @@ include("php/conexionBD.php");
 if ($_SERVER['REQUEST_METHOD'] === 'POST') { //primero checa que se envie el formulario 
     $email = $_POST['email'] ?? ''; //se hace un ?? para que si el valor es nulo se sustituya con ''
     $password = $_POST['password'] ?? '';
-
     // Consulta para verificar el usuario y contraseña
-    $stmt = $con->prepare("SELECT id_usuario, correo, password FROM usuarios WHERE correo = ?"); //se prepara la consulta, ? significa que aqui se va a poner el blind param
+    $stmt = $con->prepare("SELECT id_usuario, correo, password, rol FROM usuarios WHERE correo = ?"); //se prepara la consulta, ? significa que aqui se va a poner el blind param
     $stmt->bind_param("s", $email); //manda el correo con una s de string como parametro
     $stmt->execute();
     $result = $stmt->get_result();
@@ -17,10 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') { //primero checa que se envie el for
         //Caso de que ingrese todo bien se guarda 
         $_SESSION['id_usuario'] = $user['id_usuario'];
         $_SESSION['correo'] = $user['correo'];
+        $_SESSION['rol'] = $user['rol'];
 
-        // Redirige a tienda.php
-        //header es mandar todo desde antes
-        header("Location: tienda.php");
+        echo "Rol del usuario: " . $_SESSION['rol'];
+
+        if ($_SESSION['rol'] == 1) {
+            header("Location: administrador.php"); 
+        } else {
+            header("Location: tienda.php"); 
+        }
+
         exit();
     } else {
         $error = "Usuario o contraseña incorrectos. Por favor, inténtelo de nuevo.";

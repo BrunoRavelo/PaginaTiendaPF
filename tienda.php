@@ -3,14 +3,19 @@
 
   // Comprobar si el usuario no está logueado
   if (!isset($_SESSION['id_usuario'])) {
-      // Si no está logueado, redirigir al formulario de login (index.php)
-      header("Location: index.php");
+      // Si no está logueado, redirigir al formulario de login (login.php)
+      header("Location: login.php");
       exit(); // Termina la ejecución del script
-}
+  }
+  if ($_SESSION['rol'] != 0) {
+    // Redirigir a administrador.php si no es un usuario regular
+    header("Location: administrador.php");
+    exit();
+  }
+  // Si está logueado, continuar con la ejecución de la página (tienda.php)
+  $id_usuario = $_SESSION['id_usuario'];
+  $correo = $_SESSION['correo'];
 
-// Si está logueado, continuar con la ejecución de la página (tienda.php)
-$id_usuario = $_SESSION['id_usuario'];
-$correo = $_SESSION['correo'];
 ?>
 <?php
   // Incluir el archivo de conexión
@@ -157,10 +162,10 @@ $correo = $_SESSION['correo'];
             <?php foreach ($productos_carrito as $producto_carrito): ?>
               <li class="list-group-item d-flex justify-content-between lh-sm">
                 <div>
-                  <h6 class="my-0"><?php echo $producto['nombre']; ?></h6>
+                  <h6 class="my-0"><?php echo $producto_carrito['nombre']; ?></h6>
                   <small class="text-body-secondary">Brief description</small>
                 </div>
-                <span class="text-body-secondary">$<?php echo number_format($producto['precio'], 2); ?></span>
+                <span class="text-body-secondary">$<?php echo number_format($producto_carrito['precio'], 2); ?></span>
               </li>
             <?php endforeach; ?>
             <li class="list-group-item d-flex justify-content-between">
