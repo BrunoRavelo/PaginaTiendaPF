@@ -1,4 +1,18 @@
 <?php
+session_start();
+
+// Comprobar si el usuario no está logueado
+if (!isset($_SESSION['id_usuario'])) {
+    // Si no está logueado, redirigir al formulario de login (index.php)
+    header("Location: index.php");
+    exit(); // Termina la ejecución del script
+}
+
+// Si está logueado, continuar con la ejecución de la página (tienda.php)
+$id_usuario = $_SESSION['id_usuario'];
+$correo = $_SESSION['correo'];
+?>
+<?php
   // Incluir el archivo de conexión
   include("php/conexionBD.php");
 
