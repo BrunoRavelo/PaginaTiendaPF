@@ -1,3 +1,65 @@
+<?php
+  session_start();
+
+  // Comprobar si el usuario no está logueado
+  if (!isset($_SESSION['id_usuario'])) {
+      // Si no está logueado, redirigir al formulario de login (login.php)
+      header("Location: login.php");
+      exit(); // Termina la ejecución del script
+  }
+  if ($_SESSION['rol'] != 0) {
+    // Redirigir a administrador.php si no es un usuario regular
+    header("Location: administrador.php");
+    exit();
+  }
+  // Si está logueado, continuar con la ejecución de la página (tienda.php)
+  $id_usuario = $_SESSION['id_usuario'];
+  $correo = $_SESSION['correo'];
+
+?>
+<?php
+  // Incluir el archivo de conexión
+  include("php/conexionBD.php");
+
+  // Consulta para obtener las categorías
+  $categorias = $con->query("select id_categoria, categoria from categorias");
+
+  // Comprobar si la consulta fue exitosa
+  if (!$categorias) {
+      echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
+      die("Error en la consulta: " . mysqli_error($con));
+  }
+
+  $productos = $con->query("SELECT nombre, foto, precio FROM productos");
+  if (!$productos) {
+    echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
+    die("Error en la consulta: " . mysqli_error($con));
+  }
+  $query = "
+            SELECT p.nombre, p.precio 
+            FROM carrito c JOIN productos p 
+            ON c.id_producto = p.id_producto
+            WHERE c.id_usuario = $id_usuario
+            ";
+
+  $carrito = $con->query($query);
+  if (!$carrito) {
+    echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
+    die("Error en la consulta: " . mysqli_error($con));
+  }
+  $total = 0;
+  $productos_carrito = [];
+  while ($row = $carrito->fetch_assoc()) {
+      $productos_carrito[] = $row;
+      $total += $row['precio'];
+  }
+
+  // Cerrar la conexión
+  mysqli_close($con);
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -20,16 +82,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
-
-    <style>
-      body{
-          background-color: #ffedee;
-          height: 100vh; 
-      }
-      header{
-        background-color: #FFFFFF;
-      }
-    </style>
   </head>
   <body>
 
@@ -91,44 +143,342 @@
         <symbol xmlns="http://www.w3.org/2000/svg" id="pet" viewBox="0 0 14 14"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.5 9.5c.552 0 1-.672 1-1.5s-.448-1.5-1-1.5s-1 .672-1 1.5s.448 1.5 1 1.5m3-4.5c.552 0 1-.672 1-1.5S5.052 2 4.5 2s-1 .672-1 1.5s.448 1.5 1 1.5m5 0c.552 0 1-.672 1-1.5S10.052 2 9.5 2s-1 .672-1 1.5s.448 1.5 1 1.5m3 4.5c.552 0 1-.672 1-1.5s-.448-1.5-1-1.5s-1 .672-1 1.5s.448 1.5 1 1.5M10 10c0 1.38-1.62 2-3 2s-3-.62-3-2s1-3.5 3-3.5s3 2.12 3 3.5"/></symbol>
       </defs>
     </svg>
+    
+    <div class="preloader-wrapper">
+      <div class="preloader">
+      </div>
+    </div>
+    <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasCart">
+      <div class="offcanvas-header justify-content-center">
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div class="order-md-last">         
+          <h4 class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-primary">Your cart</span>
+            <span class="badge bg-primary rounded-pill"><?php echo count($productos_carrito); ?></span>
+          </h4>
+          <ul class="list-group mb-3">
+            <?php foreach ($productos_carrito as $producto_carrito): ?>
+              <li class="list-group-item d-flex justify-content-between lh-sm">
+                <div>
+                  <h6 class="my-0"><?php echo $producto_carrito['nombre']; ?></h6>
+                  <small class="text-body-secondary">Brief description</small>
+                </div>
+                <span class="text-body-secondary">$<?php echo number_format($producto_carrito['precio'], 2); ?></span>
+              </li>
+            <?php endforeach; ?>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Total (USD)</span>
+              <strong>$<?php echo number_format($total, 2); ?></strong>
+            </li>
+          </ul>
+
+          <button class="w-100 btn btn-primary btn-lg" type="submit">Continue to checkout</button>
+        </div>
+      </div>
+    </div>
+    <!--Carrito original
+    <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasCart">
+      <div class="offcanvas-header justify-content-center">
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div class="order-md-last">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-primary">Your cart</span>
+            <span class="badge bg-primary rounded-pill">3</span>
+          </h4>
+          <ul class="list-group mb-3">
+            <li class="list-group-item d-flex justify-content-between lh-sm">
+              <div>
+                <h6 class="my-0">Growers cider</h6>
+                <small class="text-body-secondary">Brief description</small>
+              </div>
+              <span class="text-body-secondary">$12</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between lh-sm">
+              <div>
+                <h6 class="my-0">Fresh grapes</h6>
+                <small class="text-body-secondary">Brief description</small>
+              </div>
+              <span class="text-body-secondary">$8</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between lh-sm">
+              <div>
+                <h6 class="my-0">Heinz tomato ketchup</h6>
+                <small class="text-body-secondary">Brief description</small>
+              </div>
+              <span class="text-body-secondary">$5</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Total (USD)</span>
+              <strong>$20</strong>
+            </li>
+          </ul>
+  
+          <button class="w-100 btn btn-primary btn-lg" type="submit">Continue to checkout</button>
+        </div>
+      </div>
+    </div>
+    -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
+      <div class="offcanvas-header justify-content-between">
+          <h4 class="fw-normal text-uppercase fs-6">Menu</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+    
+      <div class="offcanvas-body">
+        <ul class="navbar-nav justify-content-end menu-list list-unstyled d-flex gap-md-3 mb-0">
+          <?php while ($categoria = $categorias->fetch_assoc()): ?>
+              <li class="nav-item border-dashed">
+                  <a href="categoria.php?id=<?= $categoria['id_categoria']; ?>" 
+                     class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+                      <span><?= htmlspecialchars($categoria['categoria']); ?></span>
+                  </a>
+              </li>
+          <?php endwhile; ?>
+        </ul>
+      </div>
+    </div>
+    
+    
+
+    <!-- Codigo original de menu
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
+
+      <div class="offcanvas-header justify-content-between">
+        <h4 class="fw-normal text-uppercase fs-6">Menu</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+
+      <div class="offcanvas-body">
+    
+        <ul class="navbar-nav justify-content-end menu-list list-unstyled d-flex gap-md-3 mb-0">
+          <li class="nav-item border-dashed active">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#fruits"></use></svg>
+              <span>Fruits and vegetables</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <span>Dairy and Eggs</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <span>Meat and Poultry</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#seafood"></use></svg>
+              <span>Seafood</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#bakery"></use></svg>
+              <span>Bakery and Bread</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#canned"></use></svg>
+              <span>Canned Goods</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#frozen"></use></svg>
+              <span>Frozen Foods</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#pasta"></use></svg>
+              <span>Pasta and Rice</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#breakfast"></use></svg>
+              <span>Breakfast Foods</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#snacks"></use></svg>
+              <span>Snacks and Chips</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <button class="btn btn-toggle dropdown-toggle position-relative w-100 d-flex justify-content-between align-items-center text-dark p-2" data-bs-toggle="collapse" data-bs-target="#beverages-collapse" aria-expanded="false">
+              <div class="d-flex gap-3">
+                <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#beverages"></use></svg>
+                <span>Beverages</span>
+              </div>
+            </button>
+            <div class="collapse" id="beverages-collapse">
+              <ul class="btn-toggle-nav list-unstyled fw-normal ps-5 pb-1">
+                <li class="border-bottom py-2"><a href="index.html" class="dropdown-item">Water</a></li>
+                <li class="border-bottom py-2"><a href="index.html" class="dropdown-item">Juice</a></li>
+                <li class="border-bottom py-2"><a href="index.html" class="dropdown-item">Soda</a></li>
+                <li class="border-bottom py-2"><a href="index.html" class="dropdown-item">Tea</a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#spices"></use></svg>
+              <span>Spices and Seasonings</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#baby"></use></svg>
+              <span>Baby Food and Formula</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#health"></use></svg>
+              <span>Health and Wellness</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#household"></use></svg>
+              <span>Household Supplies</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#personal"></use></svg>
+              <span>Personal Care</span>
+            </a>
+          </li>
+          <li class="nav-item border-dashed">
+            <a href="index.html" class="nav-link d-flex align-items-center gap-3 text-dark p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#pet"></use></svg>
+              <span>Pet Food and Supplies</span>
+            </a>
+          </li>
+        </ul>
+      
+      </div>
+
+    </div>
+    -->
 
     <header>
       <div class="container-fluid">
         <div class="row py-3 border-bottom">
-    
-          <!-- Logo -->
-          <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex justify-content-center justify-content-md-start">
+          
+          <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex gap-3 justify-content-center justify-content-md-start">
             <div class="d-flex align-items-center my-3 my-sm-0">
               <a href="index.html">
-                <img src="images/logo.jpg" alt="logo"  width="70"><!--class="img-fluid"-->
+                <img src="images/logo.svg" alt="logo" class="img-fluid">
               </a>
             </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+              aria-controls="offcanvasNavbar">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#menu"></use></svg>
+            </button>
           </div>
-    
-          <!-- Navigation -->
-          <div class="col-lg-6 d-flex justify-content-center">
+          
+          <div class="col-lg-6">
             <ul class="navbar-nav list-unstyled d-flex flex-row gap-3 gap-lg-5 justify-content-center flex-wrap align-items-center mb-0 fw-bold text-uppercase text-dark">
               <li class="nav-item active">
-                <a href="index.html" class="nav-link">Inicio</a>
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item active">
+                <a href="index.html" class="nav-link">Home</a>
               </li>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle pe-3" role="button" id="pages" data-bs-toggle="dropdown" aria-expanded="false">Pages</a>
                 <ul class="dropdown-menu border-0 p-3 rounded-0 shadow" aria-labelledby="pages">
-                  <li><a href="index.html" class="dropdown-item">About Us</a></li>
-                  <li><a href="index.html" class="dropdown-item">Shop</a></li>
-                  <li><a href="index.html" class="dropdown-item">Single Product</a></li>
-                  <li><a href="index.html" class="dropdown-item">Cart</a></li>
-                  <li><a href="index.html" class="dropdown-item">Checkout</a></li>
-                  <li><a href="index.html" class="dropdown-item">Blog</a></li>
-                  <li><a href="index.html" class="dropdown-item">Single Post</a></li>
+                  <li><a href="index.html" class="dropdown-item">About Us </a></li>
+                  <li><a href="index.html" class="dropdown-item">Shop </a></li>
+                  <li><a href="index.html" class="dropdown-item">Single Product </a></li>
+                  <li><a href="index.html" class="dropdown-item">Checkout </a></li>
                 </ul>
               </li>
             </ul>
           </div>
+          
+          <div class="col-sm-4 col-lg-4 d-flex gap-5 align-items-center justify-content-center justify-content-sm-end">
+            <ul class="d-flex justify-content-end list-unstyled m-0">
+              <li>
+                <a href="#" class="p-2 mx-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                  <svg width="24" height="24"><use xlink:href="#shopping-bag"></use></svg>
+                </a>
+              </li>
+              <li class="dropdown">
+                <a href="#" class="p-2 mx-1 dropdown-toggle" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg width="24" height="24"><use xlink:href="#user"></use></svg>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><a class="dropdown-item" href="info.php">Información del Usuario</a></li>
+                  <li><a class="dropdown-item" href="logout.php">Cerrar Sesión</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          
+        </div>
+      </div>
+    </header>
+
     
-          <!-- User Icon -->
-          <div class="col-sm-4 col-lg-4 d-flex align-items-center justify-content-center justify-content-sm-end">
-            <ul class="d-flex list-unstyled m-0">
+    <!--<header>
+      <div class="container-fluid">
+        <div class="row py-3 border-bottom">
+          
+          <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex gap-3 justify-content-center justify-content-md-start">
+            <div class="d-flex align-items-center my-3 my-sm-0">
+              <a href="index.html">
+                <img src="images/logo.svg" alt="logo" class="img-fluid">
+              </a>
+            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+              aria-controls="offcanvasNavbar">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#menu"></use></svg>
+            </button>
+          </div>
+          
+          
+
+          <div class="col-lg-6">
+            <ul class="navbar-nav list-unstyled d-flex flex-row gap-3 gap-lg-5 justify-content-center flex-wrap align-items-center mb-0 fw-bold text-uppercase text-dark">
+              <li class="nav-item active">
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item active">
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle pe-3" role="button" id="pages" data-bs-toggle="dropdown" aria-expanded="false">Pages</a>
+                <ul class="dropdown-menu border-0 p-3 rounded-0 shadow" aria-labelledby="pages">
+                  <li><a href="index.html" class="dropdown-item">About Us </a></li>
+                  <li><a href="index.html" class="dropdown-item">Shop </a></li>
+                  <li><a href="index.html" class="dropdown-item">Single Product </a></li>
+                  <li><a href="index.html" class="dropdown-item">Cart </a></li>
+                  <li><a href="index.html" class="dropdown-item">Checkout </a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="col-sm-4 col-lg-4 d-flex gap-5 align-items-center justify-content-center justify-content-sm-end">
+            <ul class="d-flex justify-content-end list-unstyled m-0">
+              
+              <li>
+                <a href="#" class="p-2 mx-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                  <svg width="24" height="24"><use xlink:href="#shopping-bag"></use></svg>
+                </a>
+              </li>
               <li>
                 <a href="#" class="p-2 mx-1">
                   <svg width="24" height="24"><use xlink:href="#user"></use></svg>
@@ -136,125 +486,11 @@
               </li>
             </ul>
           </div>
-    
+
         </div>
       </div>
     </header>
-    
-    
-    
-    <section style="background-image: url('images/banner-1.jpeg');background-repeat: no-repeat;background-size: cover;">
-      <div class="container-lg">
-        <div class="row">
-          <div class="col-lg-6 pt-5 mt-5">
-            <!-- Texto con cuadro blanco -->
-            <h2 class="display-1 ls-1" style="position: relative;">
-              <span 
-                class="fw-bold" 
-                style="color: #ffffff; background-color:#F08c9c ; padding: 10px 20px; border-radius: 8px; display: inline-block;">
-                Los postres de Karen
-              </span>
-            </h2>
-    
-            <p class="fs-4" style="color: #000000;">Postres caseros hechos con amor</p>
-            
-            <!-- Botones con color personalizado -->
-            <div class="d-flex gap-3">
-              <a 
-                href="login.php" 
-                class="btn text-uppercase fs-6 rounded-pill px-4 py-3 mt-3" 
-                style="background-color: #F08c9c; color: #ffffff; border: none;">
-                Start Shopping
-              </a>
-              <a 
-                href="registro.php" 
-                class="btn text-uppercase fs-6 rounded-pill px-4 py-3 mt-3" 
-                style="background-color: #F08c9c; color: #ffffff; border: none;">
-                Join Now
-              </a>
-            </div>
-    
-            <div class="row my-5">
-              <div class="col">
-                <div class="row text-dark">
-                  <div class="col-auto"><p class="fs-1 fw-bold lh-sm mb-0"></p></div>
-                  <div class="col"><p class="text-uppercase lh-sm mb-0"></p></div>
-                </div>
-              </div>
-              <div class="col">
-                <div class="row text-dark">
-                  <div class="col-auto"><p class="fs-1 fw-bold lh-sm mb-0"></p></div>
-                  <div class="col"><p class="text-uppercase lh-sm mb-0"></p></div>
-                </div>
-              </div>
-              <div class="col">
-                <div class="row text-dark">
-                  <div class="col-auto"><p class="fs-1 fw-bold lh-sm mb-0"></p></div>
-                  <div class="col"><p class="text-uppercase lh-sm mb-0"></p></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-    
-        
-        <div class="row row-cols-1 row-cols-sm-3 row-cols-lg-3 g-0 justify-content-center">
-          <!-- Primer Columna -->
-          <div class="col">
-            <div class="card border-0 rounded-0 p-4 text-dark" style="background-color: #FFFFFF;">
-              <div class="row">
-                <div class="col-md-3 text-center">
-                  <svg width="60" height="60"><use xlink:href="#fresh"></use></svg>
-                </div>
-                <div class="col-md-9">
-                  <div class="card-body p-0">
-                    <h5 class="text-dark">Postres Caseros</h5>
-                    <p class="card-text">Deliciosos postres hechos en casa para disfrutar en familia</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        
-          <!-- Segunda Columna -->
-          <div class="col">
-            <div class="card border-0 rounded-0 p-4 text-light" style="background-color: #EAB6BF;">
-              <div class="row">
-                <div class="col-md-3 text-center">
-                  <svg width="60" height="60"><use xlink:href="#organic"></use></svg>
-                </div>
-                <div class="col-md-9">
-                  <div class="card-body p-0">
-                    <h5 class="text-light">Ingredientes 100% naturales</h5>
-                    <p class="card-text">Ingredientes frescos y de calidad de productores mexicanos</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        
-          <!-- Tercer Columna -->
-          <div class="col">
-            <div class="card border-0 rounded-0 p-4 text-light" style="background-color: #8C436D;">
-              <div class="row">
-                <div class="col-md-3 text-center">
-                  <svg width="60" height="60"><use xlink:href="#delivery"></use></svg>
-                </div>
-                <div class="col-md-9">
-                  <div class="card-body p-0">
-                    <h5 class="text-light">Envío gratis</h5>
-                    <p class="card-text">Consulta los puntos de entrega en nuestra tienda en linea</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-      
-      </div>
-    </section>
+          -->
 
     <section class="py-5 overflow-hidden">
       <div class="container-lg">
@@ -262,10 +498,10 @@
           <div class="col-md-12">
 
             <div class="section-header d-flex flex-wrap justify-content-between mb-5">
-              <h2 class="section-title">Algunos Postres de Temporada</h2>
+              <h2 class="section-title">Category</h2>
 
               <div class="d-flex align-items-center">
-                <a href="#" class="btn btn-primary me-2">View All</a>
+                
                 <div class="swiper-buttons">
                   <button class="swiper-prev category-carousel-prev btn btn-yellow">❮</button>
                   <button class="swiper-next category-carousel-next btn btn-yellow">❯</button>
@@ -280,50 +516,55 @@
 
             <div class="category-carousel swiper">
               <div class="swiper-wrapper">
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/alfajor.jpeg" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Alfajores</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/navidad.jpeg" class="rounded-circle"  style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Galleta Navideña</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-2.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads & Sweets</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/navidad2.jpeg" class="rounded-circle"  style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Galleta de Mantequilla</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-3.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/brownie.jpeg" class="rounded-circle"  style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Brownies</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-4.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Beverages</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/donarosa.jpeg" class="rounded-circle"  style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Dona Glaseada</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-5.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Meat Products</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/donas.jpeg" class="rounded-circle"  style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Mini Donas</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-6.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/panque4.jpeg" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Panque</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-7.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/cheese.jpeg" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Cheesecake</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-8.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads & Sweets</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/cheese2.jpeg" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Cheesecake</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/panlimon.jpeg" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Cuadritos de Limón</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Beverages</h4>
                 </a>
-                <a href="#" class="nav-link swiper-slide text-center">
-                  <img src="images/rol.jpeg" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Rol de Canela</h4>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Meat Products</h4>
                 </a>
+                <a href="category.html" class="nav-link swiper-slide text-center">
+                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
+                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads</h4>
+                </a>
+                
               </div>
             </div>
 
@@ -331,9 +572,130 @@
         </div>
       </div>
     </section>
+    <section class="pb-5">
+        <div class="container-lg">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="section-header d-flex flex-wrap justify-content-between my-4">
+                        <h2 class="section-title">Productos</h2>
+                    </div>
+                </div>
+            </div>
 
-    
-    
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5">
+                        <?php                        
+                        // Verificar si hay productos
+                        if ($productos->num_rows > 0) {
+                            // Mostrar productos
+                            while ($row = $productos->fetch_assoc()) {
+                                echo '<div class="col">';
+                                echo '  <div class="product-item">';
+                                echo '      <figure>';
+                                echo '          <a href="#" title="' . htmlspecialchars($row['nombre']) . '">';
+                                echo '              <img src="data:image/jpeg;base64,' . base64_encode($row['foto']) . '" alt="' . htmlspecialchars($row['nombre']) . '" class="tab-image">';
+                                echo '          </a>';
+                                echo '      </figure>';
+                                echo '      <div class="d-flex flex-column text-center">';
+                                echo '          <h3 class="fs-6 fw-normal">' . htmlspecialchars($row['nombre']) . '</h3>';
+                                echo '          <div class="d-flex justify-content-center align-items-center gap-2">';
+                                echo '              <span class="text-dark fw-semibold">$' . htmlspecialchars($row['precio']) . '</span>';
+                                echo '          </div>';
+                                echo '          <div class="button-area p-3 pt-0">';
+                                echo '              <div class="row g-1 mt-2">';
+                                echo '                  <div class="col-3"><input type="number" name="quantity" class="form-control border-dark-subtle input-number quantity" value="1"></div>';
+                                echo '                  <div class="col-7"><a href="#" class="btn btn-primary rounded-1 p-2 fs-7 btn-cart"><svg width="18" height="18"><use xlink:href="#cart"></use></svg> Add to Cart</a></div>';
+                                echo '              </div>';
+                                echo '          </div>';
+                                echo '      </div>';
+                                echo '  </div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<p>No hay productos disponibles.</p>';
+                        }
+                        ?>
+                    </div>
+                    <!-- / product-grid -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- logica de desplejar productos original
+    <section class="pb-5">
+      <div class="container-lg">
+
+        <div class="row">
+          <div class="col-md-12">
+
+            <div class="section-header d-flex flex-wrap justify-content-between my-4">
+              
+              <h2 class="section-title">Best selling products</h2>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-12">
+
+            <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5">
+                  
+              <div class="col">
+                <div class="product-item">
+                  <figure>
+                    <a href="index.html" title="Product Title">
+                      <img src="images/product-thumb-1.png" alt="Product Thumbnail" class="tab-image">
+                    </a>
+                  </figure>
+                  <div class="d-flex flex-column text-center">
+                    <h3 class="fs-6 fw-normal">Whole Wheat Sandwich Bread</h3>
+                    
+                    <div class="d-flex justify-content-center align-items-center gap-2">
+                      <span class="text-dark fw-semibold">$18.00</span>
+                    </div>
+                    <div class="button-area p-3 pt-0">
+                      <div class="row g-1 mt-2">
+                        <div class="col-3"><input type="number" name="quantity" class="form-control border-dark-subtle input-number quantity" value="1"></div>
+                        <div class="col-7"><a href="#" class="btn btn-primary rounded-1 p-2 fs-7 btn-cart"><svg width="18" height="18"><use xlink:href="#cart"></use></svg> Add to Cart</a></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col">
+                <div class="product-item">
+                  <figure>
+                    <a href="index.html" title="Product Title">
+                      <img src="images/product-thumb-2.png" alt="Product Thumbnail" class="tab-image">
+                    </a>
+                  </figure>
+                  <div class="d-flex flex-column text-center">
+                    <h3 class="fs-6 fw-normal">Whole Grain Oatmeal</h3>
+                    
+                    <div class="d-flex justify-content-center align-items-center gap-2">
+                      <span class="text-dark fw-semibold">$50.00</span>
+                    </div>
+                    <div class="button-area p-3 pt-0">
+                      <div class="row g-1 mt-2">
+                        <div class="col-3"><input type="number" name="quantity" class="form-control border-dark-subtle input-number quantity" value="1"></div>
+                        <div class="col-7"><a href="#" class="btn btn-primary rounded-1 p-2 fs-7 btn-cart"><svg width="18" height="18"><use xlink:href="#cart"></use></svg> Add to Cart</a></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+    </section>
+    -->
 
     <section class="py-5">
       <div class="container-lg">
@@ -344,8 +706,8 @@
                 <svg width="32" height="32"><use xlink:href="#package"></use></svg>
               </div>
               <div class="card-body p-0">
-                <h5>Entrega gratuita</h5>
-                <p class="card-text">Disfruta de nuestros postres en casa sin costo por envío en compras mayores a $500.</p>
+                <h5>Free delivery</h5>
+                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipi elit.</p>
               </div>
             </div>
           </div>
@@ -355,8 +717,8 @@
                 <svg width="32" height="32"><use xlink:href="#secure"></use></svg>
               </div>
               <div class="card-body p-0">
-                <h5>Pago 100% seguro</h5>
-                <p class="card-text">Realiza tus pagos con total confianza a través de nuestras plataformas seguras.</p>
+                <h5>100% secure payment</h5>
+                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipi elit.</p>
               </div>
             </div>
           </div>
@@ -366,8 +728,8 @@
                 <svg width="32" height="32"><use xlink:href="#quality"></use></svg>
               </div>
               <div class="card-body p-0">
-                <h5>Garantía de calidad</h5>
-                <p class="card-text">Todos nuestros postres son elaborados con ingredientes frescos y de la mejor calidad.</p>
+                <h5>Quality guarantee</h5>
+                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipi elit.</p>
               </div>
             </div>
           </div>
@@ -377,8 +739,8 @@
                 <svg width="32" height="32"><use xlink:href="#savings"></use></svg>
               </div>
               <div class="card-body p-0">
-                <h5>Ahorros garantizados</h5>
-                <p class="card-text">Aprovecha nuestras promociones y lleva más dulzura por menos.</p>
+                <h5>guaranteed savings</h5>
+                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipi elit.</p>
               </div>
             </div>
           </div>
@@ -388,8 +750,8 @@
                 <svg width="32" height="32"><use xlink:href="#offers"></use></svg>
               </div>
               <div class="card-body p-0">
-                <h5>Ofertas diarias</h5>
-                <p class="card-text">Consulta nuestras ofertas especiales y sorpréndete con nuevas creaciones cada día.</p>
+                <h5>Daily offers</h5>
+                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipi elit.</p>
               </div>
             </div>
           </div>
@@ -397,14 +759,13 @@
       </div>
     </section>
 
-    
     <footer class="py-5">
       <div class="container-lg">
         <div class="row">
 
           <div class="col-lg-3 col-md-6 col-sm-6">
             <div class="footer-menu">
-              <img src="images/logo.jpg" width="70" alt="logo">
+              <img src="images/logo.svg" width="240" height="70" alt="logo">
               <div class="social-links mt-3">
                 <ul class="d-flex list-unstyled gap-2">
                   <li>
@@ -448,7 +809,6 @@
         </div>
       </div>
     </div>
-
     <script src="js/jquery-1.11.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>

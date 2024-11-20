@@ -63,7 +63,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Organic - Grocery Store HTML Website Template</title>
+    <title>Tienda</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -81,7 +81,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-
+    <style>
+      body{
+          background-color: #ffedee;
+          height: 100vh; 
+      }
+      header{
+        background-color: #FFFFFF;
+      }
+    </style>
   </head>
   <body>
 
@@ -372,9 +380,67 @@
     </div>
     -->
 
+    <header>
+      <div class="container-fluid">
+        <div class="row py-3 border-bottom">
+          
+          <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex gap-3 justify-content-center justify-content-md-start">
+            <div class="d-flex align-items-center my-3 my-sm-0">
+              <a href="index.html">
+                <img src="images/logo.jpg" alt="logo" width="70">
+              </a>
+            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+              aria-controls="offcanvasNavbar">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#menu"></use></svg>
+            </button>
+          </div>
+          
+          <div class="col-lg-6">
+            <ul class="navbar-nav list-unstyled d-flex flex-row gap-3 gap-lg-5 justify-content-center flex-wrap align-items-center mb-0 fw-bold text-uppercase text-dark">
+              <li class="nav-item active">
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item active">
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle pe-3" role="button" id="pages" data-bs-toggle="dropdown" aria-expanded="false">Pages</a>
+                <ul class="dropdown-menu border-0 p-3 rounded-0 shadow" aria-labelledby="pages">
+                  <li><a href="index.html" class="dropdown-item">About Us </a></li>
+                  <li><a href="index.html" class="dropdown-item">Shop </a></li>
+                  <li><a href="index.html" class="dropdown-item">Single Product </a></li>
+                  <li><a href="index.html" class="dropdown-item">Checkout </a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="col-sm-4 col-lg-4 d-flex gap-5 align-items-center justify-content-center justify-content-sm-end">
+            <ul class="d-flex justify-content-end list-unstyled m-0">
+              <li>
+                <a href="#" class="p-2 mx-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                  <svg width="24" height="24"><use xlink:href="#shopping-bag"></use></svg>
+                </a>
+              </li>
+              <li class="dropdown">
+                <a href="#" class="p-2 mx-1 dropdown-toggle" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg width="24" height="24"><use xlink:href="#user"></use></svg>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><a class="dropdown-item" href="info.php">Información del Usuario</a></li>
+                  <li><a class="dropdown-item" href="logout.php">Cerrar Sesión</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          
+        </div>
+      </div>
+    </header>
 
     
-    <header>
+    <!--<header>
       <div class="container-fluid">
         <div class="row py-3 border-bottom">
           
@@ -432,88 +498,9 @@
         </div>
       </div>
     </header>
+          -->
+
     
-
-    <section class="py-5 overflow-hidden">
-      <div class="container-lg">
-        <div class="row">
-          <div class="col-md-12">
-
-            <div class="section-header d-flex flex-wrap justify-content-between mb-5">
-              <h2 class="section-title">Category</h2>
-
-              <div class="d-flex align-items-center">
-                
-                <div class="swiper-buttons">
-                  <button class="swiper-prev category-carousel-prev btn btn-yellow">❮</button>
-                  <button class="swiper-next category-carousel-next btn btn-yellow">❯</button>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
-
-            <div class="category-carousel swiper">
-              <div class="swiper-wrapper">
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-2.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads & Sweets</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-3.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-4.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Beverages</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-5.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Meat Products</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-6.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-7.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-8.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads & Sweets</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Fruits & Veges</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Beverages</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Meat Products</h4>
-                </a>
-                <a href="category.html" class="nav-link swiper-slide text-center">
-                  <img src="images/category-thumb-1.jpg" class="rounded-circle" alt="Category Thumbnail">
-                  <h4 class="fs-6 mt-3 fw-normal category-title">Breads</h4>
-                </a>
-                
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </section>
     <section class="pb-5">
         <div class="container-lg">
             <div class="row">
@@ -707,7 +694,7 @@
 
           <div class="col-lg-3 col-md-6 col-sm-6">
             <div class="footer-menu">
-              <img src="images/logo.svg" width="240" height="70" alt="logo">
+              <img src="images/logo.jpg" height="70" alt="logo">
               <div class="social-links mt-3">
                 <ul class="d-flex list-unstyled gap-2">
                   <li>

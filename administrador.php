@@ -58,9 +58,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Administrador de Productos</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 
 <body>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <defs>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="user" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="3"/><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M17.97 20c-.16-2.892-1.045-5-5.97-5s-5.81 2.108-5.97 5"/></g></symbol>
+        </defs>
+    </svg>
+
+
+    <header>
+
+      <div class="container-fluid">
+        <div class="row py-3 border-bottom">
+          
+          <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex gap-3 justify-content-center justify-content-md-start">
+            <div class="d-flex align-items-center my-3 my-sm-0">
+              <a href="index.html">
+                <img src="images/logo.jpg" alt="logo" width="70">
+              </a>
+            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+              aria-controls="offcanvasNavbar">
+              <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#menu"></use></svg>
+            </button>
+          </div>
+          
+          <div class="col-lg-6">
+            <ul class="navbar-nav list-unstyled d-flex flex-row gap-3 gap-lg-5 justify-content-center flex-wrap align-items-center mb-0 fw-bold text-uppercase text-dark">
+              <li class="nav-item active">
+                <a href="index.html" class="nav-link">Inicio</a>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="col-sm-4 col-lg-4 d-flex gap-5 align-items-center justify-content-center justify-content-sm-end">
+            <ul class="d-flex justify-content-end list-unstyled m-0">
+              <li class="dropdown">
+                <a href="#" class="p-2 mx-1 dropdown-toggle" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg width="24" height="24"><use xlink:href="#user"></use></svg>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><a class="dropdown-item" href="logout.php">Cerrar Sesión</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          
+        </div>
+      </div>
+    </header>
     <div class="container mt-5">
         <h1 class="text-center mb-4">Administrador de Productos</h1>
 
