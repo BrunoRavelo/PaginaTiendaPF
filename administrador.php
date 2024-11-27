@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.php"); // Redirigir al inicio de sesión si no es admin
+    header("Location: index.html"); // Redirigir al inicio de sesión si no es admin
     exit();
 }
 if ($_SESSION['rol'] != 1) {
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           
           <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex gap-3 justify-content-center justify-content-md-start">
             <div class="d-flex align-items-center my-3 my-sm-0">
-              <a href="index.html">
+              <a href="../index.html">
                 <img src="images/logo.jpg" alt="logo" width="70">
               </a>
             </div>
@@ -88,8 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           
           <div class="col-lg-6">
             <ul class="navbar-nav list-unstyled d-flex flex-row gap-3 gap-lg-5 justify-content-center flex-wrap align-items-center mb-0 fw-bold text-uppercase text-dark">
+                <li class="nav-item active">
+                <a href="administrador.php" class="nav-link">Insertar Productos</a>
+              </li>
               <li class="nav-item active">
-                <a href="index.html" class="nav-link">Inicio</a>
+                <a href="modificar.php" class="nav-link">Editar Productos</a>
+              </li>
+              <li class="nav-item active">
+                <a href="ventas.php" class="nav-link">Registro de Ventas</a>
               </li>
             </ul>
           </div>

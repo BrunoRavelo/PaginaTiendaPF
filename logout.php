@@ -27,7 +27,7 @@ $mensaje = "Has cerrado sesión correctamente.";
         <div class="card p-4 shadow" style="width: 400px;">
             <h2 class="text-center mb-4">Cerrar Sesión</h2>
             <div class="alert alert-success text-center">
-                <?= htmlspecialchars($mensaje) ?> <!-- Evita ataques -->
+                <?= htmlspecialchars($mensaje) ?>
             </div>
             <div class="text-center">
                 <button class="btn btn-primary w-100" style="background-color: #F08C9C; color: white; border: none;" 

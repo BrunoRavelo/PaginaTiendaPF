@@ -1,82 +1,3 @@
-<?php
-  session_start();
-
-  // Comprobar si el usuario no está logueado
-  if (!isset($_SESSION['id_usuario'])) {
-      // Si no está logueado, redirigir al formulario de login
-      header("Location: login.php");
-      exit(); // Termina la ejecución del script
-  }
-  if ($_SESSION['rol'] != 0) {
-    // Redirigir a administrador.php si no es un usuario regular
-    header("Location: administrador.php");
-    exit();
-  }
-  // Si está logueado, continuar con la ejecución de la página
-  $id_usuario = $_SESSION['id_usuario'];
-  $correo = $_SESSION['correo'];
-
-  if (isset($_SESSION['checkout_message'])) {
-    echo '<div class="alert alert-' . $_SESSION['checkout_message']['type'] . ' alert-dismissible fade show" role="alert">';
-    echo htmlspecialchars($_SESSION['checkout_message']['text']);
-    echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-    echo '</div>';
-    unset($_SESSION['checkout_message']);
-}
-
-if (isset($_SESSION['cart_message'])) {
-    echo '<div class="alert alert-' . $_SESSION['cart_message']['type'] . ' alert-dismissible fade show" role="alert">';
-    echo htmlspecialchars($_SESSION['cart_message']['text']);
-    echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-    echo '</div>';
-    unset($_SESSION['cart_message']);
-}
-?>
-
-
-<?php
-  // Incluir el archivo de conexión
-  include("php/conexionBD.php");
-
-  // Consulta para obtener las categorías
-  $categorias = $con->query("select id_categoria, categoria from categorias");
-
-  // Comprobar si la consulta fue exitosa
-  if (!$categorias) {
-      echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
-      die("Error en la consulta: " . mysqli_error($con));
-  }
-
-  $productos = $con->query("SELECT id_producto, nombre, foto, precio FROM productos");
-  if (!$productos) {
-    echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
-    die("Error en la consulta: " . mysqli_error($con));
-  }
-  $query = "
-            SELECT p.id_producto, p.nombre, p.precio, c.cantidad
-            FROM carrito c JOIN productos p 
-            ON c.id_producto = p.id_producto
-            WHERE c.id_usuario = $id_usuario
-            ";
-
-  $carrito = $con->query($query);
-  if (!$carrito) {
-    echo "<script>console.error('Error en la consulta: " . mysqli_error($con) . "');</script>";
-    die("Error en la consulta: " . mysqli_error($con));
-  }
-  $total = 0;
-  $productos_carrito = [];
-  while ($row = $carrito->fetch_assoc()) {
-      $productos_carrito[] = $row;
-      $total += $row['precio']* $row['cantidad'];
-  }
-
-  // Cerrar la conexión
-  mysqli_close($con);
-
-?>
-
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -106,20 +27,6 @@ if (isset($_SESSION['cart_message'])) {
       header{
         background-color: #FFFFFF;
       }
-      .btn-pink {
-          background-color: #ffccd5; 
-          color: #333; 
-          color: black;                 
-          font-size: 14px;              
-          text-align: center;           
-          text-decoration: none;        
-      }
-
-      .btn-pink:hover {
-          background-color: #ff3385; 
-          color: white;
-      }
-
     </style>
   </head>
   <body>
@@ -146,71 +53,14 @@ if (isset($_SESSION['cart_message'])) {
       </defs>
     </svg>
     
-    <div class="preloader-wrapper">
-      <div class="preloader">
-      </div>
-    </div>
-    <div class="offcanvas offcanvas-end offcanvas-lg" data-bs-scroll="true" tabindex="-1" id="offcanvasCart">
-      <div class="offcanvas-header justify-content-center">
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body">
-        <div class="order-md-last">
-          <h4 class="d-flex justify-content-between align-items-center mb-3">
-            <span class="text-primary">Your cart</span>
-            <span class="badge bg-primary rounded-pill"><?php echo count($productos_carrito); ?></span>
-          </h4>
-          <ul class="list-group mb-3">
-            <?php foreach ($productos_carrito as $producto_carrito): ?>
-              <li class="list-group-item d-flex justify-content-between lh-sm">
-                <div>
-                  <h6 class="my-0"><?php echo $producto_carrito['nombre']; ?></h6>
-                  <small class="text-body-secondary">Cantidad: <?php echo $producto_carrito['cantidad']; ?></small>
-                </div>
-                <div class="d-flex align-items-center">
-                  <!-- Botón "-" -->
-                  <form method="POST" action="carrito.php" class="me-2">
-                    <input type="hidden" name="id_producto" value="<?php echo $producto_carrito['id_producto']; ?>">
-                    <input type="hidden" name="cantidad" value="-1">
-                    <input type="hidden" name="id_usuario" value="<?php echo $_SESSION['id_usuario']; ?>">
-                    <button type="submit" class="btn btn-sm btn-outline-danger px-2">-</button>
-                  </form>
 
-                  <!-- Botón "+" -->
-                  <form method="POST" action="carrito.php" class="me-2">
-                    <input type="hidden" name="id_producto" value="<?php echo $producto_carrito['id_producto']; ?>">
-                    <input type="hidden" name="cantidad" value="1">
-                    <input type="hidden" name="id_usuario" value="<?php echo $_SESSION['id_usuario']; ?>">
-                    <button type="submit" class="btn btn-sm btn-outline-success px-2">+</button>
-                  </form>
-
-                  <!-- Bote de basura -->
-                  <a href="eliminarProductoCarrito.php?id_producto=<?php echo $producto_carrito['id_producto']; ?>" 
-                    class="text-danger text-decoration-none">
-                    <svg class="icon" width="20" height="20">
-                      <use href="#trash"></use>
-                    </svg>
-                  </a>
-                </div>
-              </li>
-            <?php endforeach; ?>
-            <li class="list-group-item d-flex justify-content-between">
-              <span>Total</span>
-              <strong>$<?php echo number_format($total, 2); ?></strong>
-            </li>
-          </ul>
-
-          <a href="checkout.php" class="w-100 btn btn-primary btn-lg">Continuar a checkout</a>
-        </div>
-      </div>
-    </div>
     <header>
       <div class="container-fluid">
         <div class="row py-3 border-bottom">
           
           <div class="col-sm-4 col-lg-2 text-center text-sm-start d-flex gap-3 justify-content-center justify-content-md-start">
             <div class="d-flex align-items-center my-3 my-sm-0">
-              <a href="tienda.php">
+              <a href="index.html">
                 <img src="images/logo.jpg" alt="logo" width="70">
               </a>
             </div>
@@ -230,197 +80,32 @@ if (isset($_SESSION['cart_message'])) {
             </ul>
           </div>
           
-          <div class="col-sm-4 col-lg-4 d-flex gap-5 align-items-center justify-content-center justify-content-sm-end">
-            <ul class="d-flex justify-content-end list-unstyled m-0">
-              <li>
-                <a href="#" class="p-2 mx-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
-                  <svg width="24" height="24"><use xlink:href="#shopping-bag"></use></svg>
-                </a>
-              </li>
-              <li class="dropdown">
-                <a href="#" class="p-2 mx-1 dropdown-toggle" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <svg width="24" height="24"><use xlink:href="#user"></use></svg>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                  <li><a class="dropdown-item" href="info.php">Información del Usuario</a></li>
-                  <li><a class="dropdown-item" href="logout.php">Cerrar Sesión</a></li>
-                </ul>
-              </li>
-            </ul>
-          </div>
+          
           
         </div>
       </div>
     </header>
-          <section class="pb-5">
-            <div class="container-lg">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="section-header d-flex flex-wrap justify-content-between my-4">
-                            <h2 class="section-title">Productos</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5">
-                            <?php
-                            if ($productos->num_rows > 0) {
-                                while ($row = $productos->fetch_assoc()) {
-                                    echo '<div class="col">';
-                                    echo '  <div class="product-item">';
-                                    echo '      <figure>';
-                                    echo '          <a href="#" title="' . htmlspecialchars($row['nombre']) . '">';
-                                    echo '              <img src="data:image/jpeg;base64,' . base64_encode($row['foto']) . '" alt="' . htmlspecialchars($row['nombre']) . '" class="tab-image">';
-                                    echo '          </a>';
-                                    echo '      </figure>';
-                                    echo '      <div class="d-flex flex-column text-center">';
-                                    echo '          <h3 class="fs-6 fw-normal">' . htmlspecialchars($row['nombre']) . '</h3>';
-                                    echo '          <div class="d-flex justify-content-center align-items-center gap-2">';
-                                    echo '              <span class="text-dark fw-semibold">$' . htmlspecialchars($row['precio']) . '</span>';
-                                    echo '          </div>';
-                                    echo '          <a href="producto.php?id_producto=' . $row['id_producto'] . '" class="btn btn-pink mt-2">Ver Detalles</a>';
-                                    echo '          <form method="POST" action="carrito.php" class="mt-3">';
-                                    echo '              <input type="hidden" name="id_producto" value="' . $row['id_producto'] . '">';
-                                    echo '              <input type="hidden" name="cantidad" value="1">';
-                                    echo '              <input type="hidden" name="id_usuario" value="' . $_SESSION['id_usuario'] . '">';
-                                    echo '              <button type="submit" class="btn btn-pink p-2 fs-7 w-100">Añadir al carrito</button>';
-                                    echo '          </form>';
-                                    echo '      </div>';
-                                    echo '  </div>';
-                                    echo '</div>';
-                                }
-                            } else {
-                                echo '<p>No hay productos disponibles.</p>';
-                            }
-                            ?>
-                        </div>
-                        <!-- / product-grid -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-
-
-
-    <!--logica de desplegar productos sin carrito
-    <section class="pb-5">
-        <div class="container-lg">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="section-header d-flex flex-wrap justify-content-between my-4">
-                        <h2 class="section-title">Productos</h2>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5">
-                        <?php                        
-                        // Verificar si hay productos
-                        if ($productos->num_rows > 0) {
-                            // Mostrar productos
-                            while ($row = $productos->fetch_assoc()) {
-                                echo '<div class="col">';
-                                echo '  <div class="product-item">';
-                                echo '      <figure>';
-                                echo '          <a href="#" title="' . htmlspecialchars($row['nombre']) . '">';
-                                echo '              <img src="data:image/jpeg;base64,' . base64_encode($row['foto']) . '" alt="' . htmlspecialchars($row['nombre']) . '" class="tab-image">';
-                                echo '          </a>';
-                                echo '      </figure>';
-                                echo '      <div class="d-flex flex-column text-center">';
-                                echo '          <h3 class="fs-6 fw-normal">' . htmlspecialchars($row['nombre']) . '</h3>';
-                                echo '          <div class="d-flex justify-content-center align-items-center gap-2">';
-                                echo '              <span class="text-dark fw-semibold">$' . htmlspecialchars($row['precio']) . '</span>';
-                                echo '          </div>';
-                                echo '          <div class="button-area p-3 pt-0">';
-                                echo '              <div class="row g-1 mt-2">';
-                                echo '                  <div class="col-3"><input type="number" name="quantity" class="form-control border-dark-subtle input-number quantity" value="1"></div>';
-                                echo '                  <div class="col-7"><a href="#" class="btn btn-primary rounded-1 p-2 fs-7 btn-cart"><svg width="18" height="18"><use xlink:href="#cart"></use></svg> Add to Cart</a></div>';
-                                echo '              </div>';
-                                echo '          </div>';
-                                echo '      </div>';
-                                echo '  </div>';
-                                echo '</div>';
-                            }
-                        } else {
-                            echo '<p>No hay productos disponibles.</p>';
-                        }
-                        ?>
-                    </div>
-                    
-                </div>
-            </div>
-        </div>
-    </section>
-                      -->
-
-
-                      <section class="py-5">
-      <div class="container-lg">
-        <div class="row row-cols-1 row-cols-sm-3 row-cols-lg-5">
-          <div class="col">
-            <div class="card mb-3 border border-dark-subtle p-3">
-              <div class="text-dark mb-3">
-                <svg width="32" height="32"><use xlink:href="#package"></use></svg>
-              </div>
-              <div class="card-body p-0">
-                <h5>Entrega gratuita</h5>
-                <p class="card-text">Disfruta de nuestros postres en casa sin costo por envío en compras mayores a $500.</p>
-              </div>
-            </div>
+    <div class="container my-5">
+        <div class="row bg-white shadow rounded p-4">
+          <!-- Image Section -->
+          <div class="col-md-4 d-flex justify-content-center align-items-start">
+            <img src="images/brownie.jpeg" alt="About Us Image" class="img-fluid rounded">
           </div>
-          <div class="col">
-            <div class="card mb-3 border border-dark-subtle p-3">
-              <div class="text-dark mb-3">
-                <svg width="32" height="32"><use xlink:href="#secure"></use></svg>
-              </div>
-              <div class="card-body p-0">
-                <h5>Pago 100% seguro</h5>
-                <p class="card-text">Realiza tus pagos con total confianza a través de nuestras plataformas seguras.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card mb-3 border border-dark-subtle p-3">
-              <div class="text-dark mb-3">
-                <svg width="32" height="32"><use xlink:href="#quality"></use></svg>
-              </div>
-              <div class="card-body p-0">
-                <h5>Garantía de calidad</h5>
-                <p class="card-text">Todos nuestros postres son elaborados con ingredientes frescos y de la mejor calidad.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card mb-3 border border-dark-subtle p-3">
-              <div class="text-dark mb-3">
-                <svg width="32" height="32"><use xlink:href="#savings"></use></svg>
-              </div>
-              <div class="card-body p-0">
-                <h5>Ahorros garantizados</h5>
-                <p class="card-text">Aprovecha nuestras promociones y lleva más dulzura por menos.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card mb-3 border border-dark-subtle p-3">
-              <div class="text-dark mb-3">
-                <svg width="32" height="32"><use xlink:href="#offers"></use></svg>
-              </div>
-              <div class="card-body p-0">
-                <h5>Ofertas diarias</h5>
-                <p class="card-text">Consulta nuestras ofertas especiales y sorpréndete con nuevas creaciones cada día.</p>
-              </div>
-            </div>
+          <!-- Text Section -->
+          <div class="col-md-8">
+            <h2 class="mb-3">About Us</h2>
+            <p class="text-muted">
+                En Postres de Karen, creemos que los momentos más dulces de la vida merecen ser compartidos. Somos una repostería artesanal dedicada a crear delicias caseras elaboradas con productos 100% naturales y el ingrediente más importante: amor.
+
+Cada uno de nuestros postres es preparado con cuidado y atención a los detalles, garantizando sabores auténticos que evocan la calidez del hogar. Desde pasteles esponjosos hasta galletas recién horneadas, nuestro compromiso es ofrecerte productos frescos que se conviertan en el centro de tus reuniones familiares y celebraciones especiales.
+
+Nuestra pasión por la repostería nos impulsa a reinventar recetas tradicionales, manteniendo la esencia de lo casero en cada bocado. En Postres de Karen, nuestro objetivo es llevar alegría a tu mesa y ser parte de tus momentos inolvidables.
+
+¡Gracias por permitirnos endulzar tu vida!
+            </p>
           </div>
         </div>
-      </div>
-    </section>
-
+    </div>
     <footer class="py-5">
       <div class="container-lg">
         <div class="row">
@@ -466,7 +151,7 @@ if (isset($_SESSION['cart_message'])) {
       <div class="container-lg">
         <div class="row">
           <div class="col-md-6 copyright">
-            <p>© 2024 Organic. All rights reserved.</p>
+            <p>© 2024 Postres de Karen. All rights reserved.</p>
           </div>
         </div>
       </div>
